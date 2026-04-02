@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --header-gradient: linear-gradient(135deg, #ff6b6b, #feca57);
+            --holiday-color: #d1ecf1; --weekend-color: #fff3cd; --today-gradient: linear-gradient(135deg, #d4edda, #c3e6cb);
+        }
+        * { box-sizing: border-box; }
+body { font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; background: var(--bg-gradient); min-height: 100vh; margin: 0; padding: 10px; overflow-x: hidden; line-height: 1.6; }
+        .main-container { display: flex; gap: 20px; height: calc(100vh - 80px); margin-top: 80px; max-width: 1400px; margin-left: auto; margin-right: auto; }
+        .calendar-section { flex: 1; max-width: 1000px; margin: 0 auto; }
+        .sidebar { position: fixed; right: 20px; top: 90px; width: 380px; height: calc(100vh - 110px); z-index: 100; transform: translateX(400px); transition: transform 0.4s ease; overflow-y: auto; }
+        .sidebar.show { transform: translateX(0); }
+        @media (max-width: 1200px) { .calendar-section { margin: 0; width: 100%; } .sidebar { right: -380px; } .sidebar.show { right: 20px; } }
+        .sidebar { width: 350px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); padding: 25px; height: fit-content; }
+        .sidebar.hidden { display: none; }
+.title { text-align: center; color: white; font-family: 'Poppins', sans-serif; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 800; margin-bottom: 20px; text-shadow: 0 4px 12px rgba(0,0,0,0.3); letter-spacing: -0.02em; }
+        .toggle-btn { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.2); backdrop-filter: blur(20px); border: none; color: white; width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.3); transition: all 0.3s; z-index: 1000; }
+        .toggle-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.3); }
+        .nav-row { background: rgba(255,255,255,0.15); backdrop-filter: blur(20px); border-radius: 50px; padding: 15px 30px; display: flex; justify-content: center; gap: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .nav-btn { background: white; border: none; color: #333; padding: 12px 24px; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .nav-btn:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.3); }
+        .calendar-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden; height: 550px; }
+        .month-title { background: var(--header-gradient); color: white; padding: 25px; text-align: center; }
+.month-title h2 { margin: 0; font-family: 'Poppins', sans-serif; font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800; letter-spacing: -0.01em; }
+        .calendar-table { height: calc(100% - 120px); font-size: clamp(0.85rem, 2vw, 1rem); }
+.calendar-table th { background: #f8f9fa !important; font-weight: 600 !important; padding: 10px 6px !important; border-top: none !important; text-align: center; }
+.calendar-table th:first-child, .calendar-table th:last-child { color: #dc3545 !important; font-weight: 700 !important; font-family: 'Poppins', sans-serif !important; }
+        .calendar-table td { position: relative; cursor: pointer; padding: 8px 4px !important; text-align: center; transition: all 0.2s; min-height: 40px; }
+        .calendar-table td:hover { transform: scale(1.06); z-index: 5; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .calendar-table td.empty { cursor: default; opacity: 0.4; }
+        .weekend { background: var(--weekend-color) !important; }
+        .holiday { background: var(--holiday-color) !important; font-weight: 700 !important; }
+        .today { background: var(--today-gradient) !important; border: 2px solid #28a745 !important; font-weight: 800 !important; }
+        .badge { position: absolute; top: 1px; right: 1px; font-size: 0.6rem; padding: 1px 4px; border-radius: 10px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); max-width: 65px; }
+        .holiday-badge { background: rgba(23,162,184,0.9); color: white; }
+        .plan-badge { background: rgba(13,110,253,0.9); color: white; }
+        .plan-badge:hover { background: rgba(13,110,253,1); }
+        .todo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.1); }
+        .todo-header h3 { margin: 0; color: #333; }
+        .todo-count { background: var(--header-gradient); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
+        .todo-list { max-height: 400px; overflow-y: auto; }
+        .todo-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin-bottom: 10px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #0d6efd; cursor: pointer; transition: all 0.2s; }
+        .todo-item:hover { background: #e9ecef; transform: translateX(4px); }
+        .todo-date { font-weight: 600; color: #495057; font-size: 0.9rem; }
+        .todo-plan { flex: 1; color: #212529; }
+        .todo-delete { background: #dc3545; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 14px; margin-left: auto; }
+        .notification { position: fixed; top: 80px; right: 20px; z-index: 10001; padding: 12px 20px; border-radius: 12px; color: white; font-weight: 600; box-shadow: 0 8px 25px rgba(0,0,0,0.3); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @media (max-width: 1200px) { .main-container { flex-direction: column; } .sidebar { width: 100%; order: -1; } }
+        @media (max-width: 768px) { body { padding: 5px; } .calendar-table td { padding: 6px 2px !important; min-height: 32px; } }
+    </style>
+</head>
+<body>
+    <button class="toggle-btn" id="sidebarToggle" title="Toggle Todo List">
+        <i class="bi bi-list"></i>
+    </button>
+    
+    <div class="main-container">
+        <div class="calendar-section">
+            <h1 class="title">📅 Calendar 2026</h1>
+            <div class="nav-row">
+                <button id="prevBtn" class="nav-btn"><i class="bi bi-chevron-left"></i> Prev</button>
+                <button id="nextBtn" class="nav-btn">Next <i class="bi bi-chevron-right"></i></button>
+            </div>
+            <div class="calendar-card">
+                <div class="month-title">
+                    <h2 id="monthTitle">January 2026</h2>
+                </div>
+                <table class="table calendar-table">
+                    <thead>
+                        <tr>
+                            <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendarBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="sidebar" id="sidebar">
+            <div class="todo-header">
+                <h3><i class="bi bi-check-square"></i> All Plans</h3>
+                <span class="todo-count" id="todoCount">0</span>
+            </div>
+            <div class="todo-list" id="todoList">
+                <p style="text-align: center; color: #999; font-style: italic;">No plans yet. Add from calendar!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PLANS = JSON.parse(sessionStorage.getItem('plans') || '{}');
+        const HOLIDAYS = {
+            '01-01': 'New Year\'s Day',
+            '01-16': 'Lailatul Isra Wal Mi Raj',
+            '02-17': 'Lunar New Year\'s Day',
+            '02-19': 'Ramadan Start', 
+            '02-25': 'People Power Anniversary',
+            '03-20': 'Eid al-Fitr Holiday', 
+            '03-21': 'Eid al-Fitr', 
+            '04-02': 'Maundy Thursday', 
+            '04-03': 'Good Friday',
+            '04-04': 'Black Saturday', 
+            '04-05': 'Easter Sunday',
+            '04-09': 'The Day of Valor',
+            '05-01': 'Labor Day',
+            '05-27': 'Eid al-Adha (tentative)',
+            '05-28': 'Eid al-Adha Day 2 (tentative)', 
+            '06-12': 'Independence Day',
+            '06-17': 'Amun Jadid (tentative)',
+            '08-21': 'Ninoy Aquino Day',
+            '08-26': 'Maulid un-Nabi (tentative)',
+            '08-31': 'National Heroes Day',
+            '11-01': 'All Saint\'s Day',
+            '11-02': 'All Souls\'s Day',
+            '11-30': 'Bonifacio Day',
+            '12-08': 'Feast of the Immaculate Conception',
+            '12-24': 'Christmas Eve',
+            '12-25': 'Christmas Day',
+            '12-30': 'Rizal Day',
+            '12-31': 'New Year\'s Eve'
+        };
+        let currentMonth = 0;
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+
+        function savePlans() { sessionStorage.setItem('plans', JSON.stringify(PLANS)); }
+        function getTotalTodos() { return Object.values(PLANS).reduce((sum, plans) => sum + (Array.isArray(plans) ? plans.length : 0), 0); }
+        function updateTodoCount() { document.getElementById('todoCount').textContent = getTotalTodos(); }
+        function getBadgeText(key) { const plans = PLANS[key] || []; return plans.length ? (plans.length === 1 ? plans[0].slice(0,8) : `${plans.length}t`) : ''; }
+
+        function generateCalendar() {
+            const tbody = document.getElementById('calendarBody');
+            const title = document.getElementById('monthTitle');
+            title.textContent = `${MONTH_NAMES[currentMonth]} 2026`;
+            const firstDay = new Date(2026, currentMonth, 1).getDay();
+            const days = DAYS_IN_MONTH[currentMonth];
+            
+            let html = '';
+            for (let week = 0; week < 6; week++) {
+                html += '<tr>';
+                for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+                    const day = week * 7 + dayOfWeek - firstDay + 1;
+                    if (day > 0 && day <= days) {
+                        const monthStr = String(currentMonth + 1).padStart(2, '0');
+                        const dayStr = String(day).padStart(2, '0');
+                        const key = `${monthStr}-${dayStr}`;
+                        const holiday = HOLIDAYS[key];
+                        const plans = PLANS[key] || [];
+                        
+                        let classes = dayOfWeek === 0 || dayOfWeek === 6 ? 'weekend' : '';
+                        if (holiday) classes += ' holiday';
+                        
+                        let badges = holiday ? `<div class="badge holiday-badge">${holiday.slice(0,6)}</div>` : '';
+                        if (plans.length) badges += `<div class="badge plan-badge" onclick="showPlanList('${key}')">${getBadgeText(key)}</div>`;
+                        
+                        html += `<td class="day-cell ${classes}" data-key="${key}">${day}${badges}</td>`;
+                    } else html += '<td class="empty"></td>';
+                }
+                html += '</tr>';
+            }
+            tbody.innerHTML = html;
+        }
+
+        function showPlanList(key) {
+            const plans = PLANS[key] || [];
+            const list = plans.map((plan, i) => `
+                <div class="plan-item" data-key="${key}" data-index="${i}">
+                    <div class="todo-date">${key}</div>
+                    <div class="todo-plan">${plan}</div>
+                    <button class="todo-delete" onclick="event.stopPropagation(); deletePlan('${key}', ${i})">×</button>
+                </div>
+            `).join('') || '<p style="text-align: center; color: #999;">No plans</p>';
+            document.getElementById('todoList').innerHTML = list;
+        }
+
+        function deletePlan(key, index) {
+            if (PLANS[key] && Array.isArray(PLANS[key])) {
+                PLANS[key].splice(index, 1);
+                if (!PLANS[key].length) delete PLANS[key];
+                savePlans();
+                generateCalendar();
+                updateTodoSidebar();
+                showNotification('🗑️ Plan deleted!');
+            }
+        }
+
+        function updateTodoSidebar() {
+            const allPlans = [];
+            Object.entries(PLANS).forEach(([key, plans]) => {
+                if (Array.isArray(plans)) plans.forEach((plan, arrayIndex) => allPlans.push({key, plan, arrayIndex}));
+            });
+            // Sort by date chronological
+            allPlans.sort((a, b) => a.key.localeCompare(b.key));
+            
+            const html = allPlans.length ? allPlans.map(({key, plan, arrayIndex}) => `
+                <div class="todo-item" onclick="showPlanList('${key}')">
+                    <div class="todo-date">${key}</div>
+                    <div class="todo-plan">${plan}</div>
+                    <button class="todo-delete" onclick="event.stopPropagation(); deletePlan('${key}', ${arrayIndex})">×</button>
+                </div>
+            `).join('') : '<p style="text-align: center; color: #999;">No plans yet!</p>'; 
+            document.getElementById('todoList').innerHTML = html;
+            updateTodoCount();
+        }
+
+        function showNotification(msg) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.textContent = msg;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            generateCalendar();
+            updateTodoSidebar();
+            
+            document.getElementById('prevBtn').onclick = () => { currentMonth = (currentMonth - 1 + 12) % 12; generateCalendar(); };
+            document.getElementById('nextBtn').onclick = () => { currentMonth = (currentMonth + 1) % 12; generateCalendar(); };
+            document.getElementById('sidebarToggle').onclick = () => {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('show');
+            };
+
+            document.addEventListener('click', e => {
+                const cell = e.target.closest('.day-cell');
+                if (cell && !e.target.classList.contains('badge') && !e.target.closest('.todo-delete')) {
+                    const key = cell.dataset.key;
+                    const holiday = HOLIDAYS[key];
+                    const plan = prompt(`📝 Plan for ${MONTH_NAMES[currentMonth]} ${key.split('-')[1]} ${holiday ? `(${holiday})` : ''}:`, '');
+                    if (plan?.trim()) {
+                        if (!Array.isArray(PLANS[key])) PLANS[key] = [];
+                        PLANS[key].push(plan.trim());
+                        savePlans();
+                        generateCalendar();
+                        updateTodoSidebar();
+                        showNotification('✅ Plan added!');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
